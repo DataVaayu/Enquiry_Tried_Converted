@@ -1,0 +1,9 @@
+dash==2.11.0
+dash_bootstrap_components==1.4.1
+google_api_python_client==2.95.0
+google_auth_oauthlib==1.0.0
+pandas==1.5.3
+plotly==5.15.0
+protobuf==4.23.4
+gunicorn
+dash-tools

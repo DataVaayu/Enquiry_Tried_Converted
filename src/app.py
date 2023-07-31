@@ -225,7 +225,7 @@ from datetime import date, datetime, timedelta
 #df_stock = 
 
 app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
-server = app.server
+server=app.server
 
 app.layout = dbc.Container([
     
