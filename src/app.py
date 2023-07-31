@@ -678,7 +678,7 @@ def update_tried_location_tables(start_date,end_date,uPriceRange,lPriceRange,pro
         if row["Times Tried"]!=0:
             df_stock_filtered_Delhi.loc[index,"Conversion %"] = (row["Times Bought"]/row["Times Tried"])*100
 
-     #df_stock_filtered_Delhi=df_stock_filtered_Delhi[~df_stock_filtered_Delhi["Times Tried"].isin([0])]
+     df_stock_filtered_Delhi=df_stock_filtered_Delhi[~df_stock_filtered_Delhi["Times Tried"].isin([0])]
      df_stock_filtered_Delhi.drop_duplicates(subset="Style Code",inplace=True)
 
      # ___________________ Table For Kolkata _____________________________________________
@@ -718,7 +718,7 @@ def update_tried_location_tables(start_date,end_date,uPriceRange,lPriceRange,pro
         if row["Times Tried"]!=0:
             df_stock_filtered_Kolkata.loc[index,"Conversion %"] = (row["Times Bought"]/row["Times Tried"])*100
 
-     #df_stock_filtered_Kolkata=df_stock_filtered_Kolkata[~df_stock_filtered_Kolkata["Times Tried"].isin([0])]
+     df_stock_filtered_Kolkata=df_stock_filtered_Kolkata[~df_stock_filtered_Kolkata["Times Tried"].isin([0])]
      df_stock_filtered_Kolkata.drop_duplicates(subset="Style Code",inplace=True)
 
      return df_stock_filtered_Delhi.to_dict("records"),df_stock_filtered_Kolkata.to_dict("records")
