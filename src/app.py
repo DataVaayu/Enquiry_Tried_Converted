@@ -709,7 +709,7 @@ def update_tried_location_tables(start_date,end_date,uPriceRange,lPriceRange,pro
      # this will be basically from the stock data
 
      df_stock_filtered_Delhi = df_stock[df_stock["Category"]==productCategory]
-     #df_stock_filtered_Delhi = df_stock_filtered_Delhi[(df_stock_filtered_Delhi["MRP"]>=lPriceRange) & (df_stock_filtered_Delhi["MRP"]<=uPriceRange)]
+     df_stock_filtered_Delhi = df_stock_filtered_Delhi[(df_stock_filtered_Delhi["MRP"]>=lPriceRange) & (df_stock_filtered_Delhi["MRP"]<=uPriceRange)]
      df_stock_filtered_Delhi = df_stock_filtered_Delhi[["Category","MRP","Style Code","NOS"]]
 
      # creating the calculated column that will count the number of items that have been tried
@@ -735,7 +735,7 @@ def update_tried_location_tables(start_date,end_date,uPriceRange,lPriceRange,pro
      df_stock_filtered_Delhi=df_stock_filtered_Delhi[~df_stock_filtered_Delhi["Times Tried"].isin([0])]
      df_stock_filtered_Delhi.drop_duplicates(subset="Style Code",inplace=True)
 
-     # ____________________________________________________________ Table For Kolkata _________________________________________________________
+     # ____________________________________________________________ Table For Kolkata ______________________________________________
 
              # KOLKATA STORE WORKOUT FOR THE FIRST DATATABLE
 
@@ -753,7 +753,7 @@ def update_tried_location_tables(start_date,end_date,uPriceRange,lPriceRange,pro
      # this will be basically from the stock data
 
      df_stock_filtered_Kolkata = df_stock[df_stock["Category"]==productCategory]
-     #df_stock_filtered_Kolkata = df_stock_filtered_Kolkata[(df_stock_filtered_Kolkata["MRP"]>=lPriceRange) & (df_stock_filtered_Kolkata["MRP"]<=uPriceRange)]
+     df_stock_filtered_Kolkata = df_stock_filtered_Kolkata[(df_stock_filtered_Kolkata["MRP"]>=lPriceRange) & (df_stock_filtered_Kolkata["MRP"]<=uPriceRange)]
      df_stock_filtered_Kolkata = df_stock_filtered_Kolkata[["Category","MRP","Style Code","NOS"]]
 
      # creating the calculated column that will count the number of items that have been tried
@@ -790,4 +790,4 @@ def update_tried_location_tables(start_date,end_date,uPriceRange,lPriceRange,pro
 # __________________________________________server run ___________________________________________________________________    
 
 if __name__=="__main__":
-    app.run(debug=True,port=8022)
+    app.run(debug=True,port=8051)
