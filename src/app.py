@@ -223,6 +223,10 @@ for index,row in df_enquiry.iterrows():
     except:
         row["Date"]
 
+# Replacing the year col values that has only 23 to have 2023
+for index,row in df_enquiry.iterrows():
+    if (df_enquiry.loc[index,"Year"]==23) | (df_enquiry.loc[index,"Year"]=="23"):
+        df_enquiry.loc[index,"Year"]=2023
 
 # congragating the day month and year into one date column
 #df_enquiry["Date"]=pd.to_datetime(df_enquiry[["Year","Month","Day"]])
@@ -786,4 +790,4 @@ def update_tried_location_tables(start_date,end_date,uPriceRange,lPriceRange,pro
 # __________________________________________server run ___________________________________________________________________    
 
 if __name__=="__main__":
-    app.run(debug=True)
+    app.run(debug=True,port=8022)
