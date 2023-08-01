@@ -687,7 +687,7 @@ def update_tried_location_tables(start_date,end_date,uPriceRange,lPriceRange,pro
      # filter the data frame according to the dates entered
      df_enquiry_dateSelection = df_enquiry[df_enquiry["Date"].isin(date_values)]
      
-     # ___________________Table For Delhi _________________________________________
+     # ______________________________________________Table For Delhi ____________________________________________________
 
      # DELHI STORE WORKOUT FOR THE FIRST DATATABLE
 
@@ -717,6 +717,10 @@ def update_tried_location_tables(start_date,end_date,uPriceRange,lPriceRange,pro
         df_stock_filtered_Delhi.loc[index,"Times Tried"] = tried_string_Delhi.count(row["Style Code"])
         df_stock_filtered_Delhi.loc[index,"Times Bought"] = bought_string_Delhi.count(row["Style Code"])
 
+        # if there is one item bought then the tried cannot be zero so it is made to have a value of 1
+        if (df_stock_filtered_Delhi.loc[index,"Times Tried"]==0) & (df_stock_filtered_Delhi.loc[index,"Times Bought"]>0):
+            df_stock_filtered_Delhi.loc[index,"Times Tried"]=1
+
      # Creating a columnn for conversion rate of the outfit that has been tried
      df_stock_filtered_Delhi["Conversion %"]=0
 
@@ -727,7 +731,7 @@ def update_tried_location_tables(start_date,end_date,uPriceRange,lPriceRange,pro
      df_stock_filtered_Delhi=df_stock_filtered_Delhi[~df_stock_filtered_Delhi["Times Tried"].isin([0])]
      df_stock_filtered_Delhi.drop_duplicates(subset="Style Code",inplace=True)
 
-     # ___________________ Table For Kolkata _____________________________________________
+     # ____________________________________________________________ Table For Kolkata _________________________________________________________
 
              # KOLKATA STORE WORKOUT FOR THE FIRST DATATABLE
 
@@ -756,6 +760,10 @@ def update_tried_location_tables(start_date,end_date,uPriceRange,lPriceRange,pro
      for index,row in df_stock_filtered_Kolkata.iterrows():
         df_stock_filtered_Kolkata.loc[index,"Times Tried"] = tried_string_Kolkata.count(row["Style Code"])
         df_stock_filtered_Kolkata.loc[index,"Times Bought"] = bought_string_Kolkata.count(row["Style Code"])
+
+        # If there is one item bought then the tried cannot be zero so it is made to one
+        if (df_stock_filtered_Kolkata.loc[index,"Times Tried"]==0) & (df_stock_filtered_Kolkata.loc[index,"Times Bought"]>0):
+            df_stock_filtered_Kolkata.loc[index,"Times Tried"]=1
 
      # Creating a columnn for conversion rate of the outfit that has been tried
      df_stock_filtered_Kolkata["Conversion %"]=0
