@@ -203,11 +203,36 @@ df_product_master["Style Code Color"] = df_product_master["Style Code"] +"-"+ df
 # ___________________ Changing the format of the date column in the enquiry sheet ___________________________
 
 df_enquiry["Date"]=df_enquiry["Date"].apply(lambda x: x.strip())
-df_enquiry["Date"]=df_enquiry["Date"].apply(lambda x: x.replace(".","/"))
-df_enquiry["Date"]=pd.to_datetime(df_enquiry["Date"])
-df_enquiry["Date"]=df_enquiry["Date"].astype('str')
-print(df_enquiry["Date"].shape[0])
+df_enquiry["Date"]=df_enquiry["Date"].apply(lambda x: str(x).replace(".","/"))
 
+#separating the day, month and year
+
+for index,row in df_enquiry.iterrows():
+    try:
+        df_enquiry.loc[index,"Day"]=row["Date"].split("/")[0]
+    except:
+        row["Date"]
+        
+    try:
+        df_enquiry.loc[index,"Month"]=row["Date"].split("/")[1]
+    except:
+        row["Date"]
+        
+    try:
+        df_enquiry.loc[index,"Year"]=row["Date"].split("/")[2]
+    except:
+        row["Date"]
+
+
+# congragating the day month and year into one date column
+#df_enquiry["Date"]=pd.to_datetime(df_enquiry[["Year","Month","Day"]])
+
+for index,row in df_enquiry.iterrows():
+    df_enquiry.loc[index,"Date"] = "-".join([str(row["Year"]),str(row["Month"]),str(row["Day"])])
+
+
+df_enquiry["Date"]=df_enquiry["Date"].astype('str')
+# print(df_enquiry["Date"].shape[0])
 
 # ___________________________ Creating the Dash App _______________________________________________________
 
@@ -393,13 +418,33 @@ app.layout = dbc.Container([
     dbc.Row([
          dbc.Col([
               html.H3("Delhi Conversion"),
-              dash_table.DataTable([{"data":i,"id":i} for i in df_stock.columns],page_size=10,id="delhi-conversion-table"),
+              dash_table.DataTable([{"data":i,"id":i} for i in df_stock.columns],page_size=10,id="delhi-conversion-table",
+                                   style_data_conditional=[{
+                                   "if":{
+                                       "filter_query":"{NOS}='YES'",
+                                       "column_id":"Style Code",
+                                   },
+                                    "background-color":"tomato",
+                                    "color":"white",
+
+                                }]),
          ],width=6),
 
          dbc.Col([
               html.H3("Kolkata Conversion"),
-              dash_table.DataTable([{"data":i,"id":i} for i in df_stock.columns],page_size=10,id="kolkata-conversion-table"),
-         ],width=6),      
+              dash_table.DataTable([{"data":i,"id":i} for i in df_stock.columns],page_size=10,id="kolkata-conversion-table",
+                                   style_data_conditional=[{
+                                   "if":{
+                                       "filter_query":"{NOS}='YES'",
+                                       "column_id":"Style Code",
+                                   },
+                                    "background-color":"tomato",
+                                    "color":"white",
+
+                                }]),
+         ],width=6),  
+
+         html.Br(),    
 
 
 
@@ -445,7 +490,7 @@ def update_graph(start_date,end_date,columns_selection,uPriceRange,lPriceRange,p
     # convert the dates in the date_values list into string
     date_values=list(map(str,date_values))
 
-    print(date_values)
+    # print(date_values)
     
     
     df_enquiry_selection = df_enquiry[(df_enquiry["Date"].isin(date_values))] # filtering out the input dates
@@ -504,7 +549,7 @@ def update_graph(start_date,end_date,columns_selection,uPriceRange,lPriceRange,p
          df_stock_filtered=df_stock_filtered[df_stock_filtered["Occasion"].isin(occasionDropdown)]
 
     df_stock_filtered.drop_duplicates(subset="Style Code Color",inplace=True) # dropping duplicate style code color colummn
-    print(storeSelector)
+    # print(storeSelector)
         
     # Filtering the Osaa stock availability that are not in Delhi
 
@@ -544,7 +589,7 @@ def update_graph(start_date,end_date,columns_selection,uPriceRange,lPriceRange,p
     
     
     
-    print(uPriceRange,lPriceRange,productCatDropdown,occasionDropdown,radioNos)
+    # print(uPriceRange,lPriceRange,productCatDropdown,occasionDropdown,radioNos)
     
     return fig,df_product_master_filtered[["Style Code","Product Name","Color","Price","NOS"]].to_dict('records'),df_stock_filtered[["Style Code","Category","MRP","Color","Location Name","NOS"]].to_dict("records"),df_stock_filtered_OSAA[["Style Code","Category","MRP","Color","Location Name","NOS"]].to_dict("records"),df_product_master_filtered.shape[0],df_stock_filtered.shape[0],df_stock_filtered_OSAA.shape[0],availability_store_string,availability_Osaa_string,count_rows_string, delhi_label,kolkata_label   
 
@@ -591,8 +636,8 @@ def update_triedtable(start_date,end_date,uPriceLimit,lPriceLimit,productCategor
     df_tried["Category"].replace("SUIT","SUIT,inplace=True")
     df_tried["Category"].replace("","No Data",inplace=True)
        
-    #print(df_tried.columns)
-    #filtering out the price limits
+    # print(df_tried.columns)
+    # filtering out the price limits
     
     #removing the no data row from the price column
     df_tried=df_tried[~df_tried["Price Bracket"].isin(["No Data"])]
@@ -616,6 +661,7 @@ def update_triedtable(start_date,end_date,uPriceLimit,lPriceLimit,productCategor
     
     return df_tried2.to_dict("records")
 
+# ______________________________ Callback for Conversion Table ________________________________
 
 @callback(
      Output("delhi-conversion-table","data"),
@@ -660,7 +706,7 @@ def update_tried_location_tables(start_date,end_date,uPriceRange,lPriceRange,pro
 
      df_stock_filtered_Delhi = df_stock[df_stock["Category"]==productCategory]
      #df_stock_filtered_Delhi = df_stock_filtered_Delhi[(df_stock_filtered_Delhi["MRP"]>=lPriceRange) & (df_stock_filtered_Delhi["MRP"]<=uPriceRange)]
-     df_stock_filtered_Delhi = df_stock_filtered_Delhi[["Category","MRP","Style Code"]]
+     df_stock_filtered_Delhi = df_stock_filtered_Delhi[["Category","MRP","Style Code","NOS"]]
 
      # creating the calculated column that will count the number of items that have been tried
 
@@ -700,7 +746,7 @@ def update_tried_location_tables(start_date,end_date,uPriceRange,lPriceRange,pro
 
      df_stock_filtered_Kolkata = df_stock[df_stock["Category"]==productCategory]
      #df_stock_filtered_Kolkata = df_stock_filtered_Kolkata[(df_stock_filtered_Kolkata["MRP"]>=lPriceRange) & (df_stock_filtered_Kolkata["MRP"]<=uPriceRange)]
-     df_stock_filtered_Kolkata = df_stock_filtered_Kolkata[["Category","MRP","Style Code"]]
+     df_stock_filtered_Kolkata = df_stock_filtered_Kolkata[["Category","MRP","Style Code","NOS"]]
 
      # creating the calculated column that will count the number of items that have been tried
 
