@@ -19,6 +19,8 @@ SPREADSHEET_ID = '1GTApxk_-pGgoPxXbhR0rSz_E9YuaB93kj8MjRzEuUOc'
 SHEET_NAME_ENQUIRY = '2023!A:AC'
 SHEET_NAME_TOTAL_STOCK = "Total Stock!A:M"
 SHEET_NAME_PRODUCT_MASTER = "Company Product Master!A:T"
+DSR_Kolkata = "DSR Kolkata!A:P"
+DSR_Delhi = "DSR Delhi!A:P"
 
 
 
@@ -61,6 +63,18 @@ try:
     result_product_master = sheet.values().get(spreadsheetId=SPREADSHEET_ID,
                                 range=SHEET_NAME_PRODUCT_MASTER).execute()
     values_product_master = result_product_master.get('values', [])
+    
+    # 2. Call the Sheets dsr kolkata data
+    sheet = service.spreadsheets()
+    result_dsr_kolkata = sheet.values().get(spreadsheetId=SPREADSHEET_ID,
+                                range=DSR_Kolkata).execute()
+    values_dsr_kolkata = result_dsr_kolkata.get('values', [])
+    
+    # 3. Call the Sheets API to get dsr delhi data
+    sheet = service.spreadsheets()
+    result_dsr_delhi = sheet.values().get(spreadsheetId=SPREADSHEET_ID,
+                                range=DSR_Delhi).execute()
+    values_dsr_delhi = result_dsr_delhi.get('values', [])
 
     if not values:
         print('No data found.')
@@ -74,6 +88,10 @@ try:
     # creating the dataframe by reading product master
     df_product_master = pd.DataFrame.from_records(values_product_master)
     
+    # Creating the dataframes for DSR Kolkata and Delhi
+    df_dsr_kolkata = pd.DataFrame.from_records(values_dsr_kolkata)
+    df_dsr_delhi = pd.DataFrame.from_records(values_dsr_delhi)
+    
     
 
 except HttpError as err:
@@ -84,7 +102,7 @@ except HttpError as err:
     
 # Setting the column names to the first rows that appear in the dataframes
 
-dataframes=[df_enquiry,df_stock,df_product_master]
+dataframes=[df_enquiry,df_stock,df_product_master,df_dsr_kolkata,df_dsr_delhi]
 
 for i in dataframes:
     i.columns=i.loc[0]
@@ -237,6 +255,23 @@ for index,row in df_enquiry.iterrows():
 
 df_enquiry["Date"]=df_enquiry["Date"].astype('str')
 # print(df_enquiry["Date"].shape[0])
+
+# ____________________________ Making the Date Column for DSR Table ______________________________________
+
+
+# Making the date column for Kolkata DSR
+
+drop_index = df_dsr_kolkata[df_dsr_kolkata["Date2"]=="--"].index
+df_dsr_kolkata.drop(index=drop_index,inplace=True)
+df_dsr_kolkata["Date2"]=pd.to_datetime(df_dsr_kolkata["Date2"])
+df_dsr_kolkata["Date2"]=df_dsr_kolkata["Date2"].astype(str)
+
+# Making the date column for Delhi DSR
+
+drop_index_delhi = df_dsr_delhi[df_dsr_delhi["Date2"]=="--"].index
+df_dsr_delhi.drop(index=drop_index_delhi,inplace=True)
+df_dsr_delhi["Date2"]=pd.to_datetime(df_dsr_delhi["Date2"])
+df_dsr_delhi["Date2"]=df_dsr_delhi["Date2"].astype(str)
 
 # ___________________________ Creating the Dash App _______________________________________________________
 
@@ -690,6 +725,35 @@ def update_tried_location_tables(start_date,end_date,uPriceRange,lPriceRange,pro
      
      # filter the data frame according to the dates entered
      df_enquiry_dateSelection = df_enquiry[df_enquiry["Date"].isin(date_values)]
+    
+     # Filtering the DSR dataframes according to the start and end date
+     df_dsr_kolkata_filtered = df_dsr_kolkata[df_dsr_kolkata["Date2"].isin(date_values)]
+     df_dsr_delhi_filtered = df_dsr_delhi[df_dsr_delhi["Date2"].isin(date_values)]
+    
+     # Creating the summary tables for the dress codes in Kolkata
+    
+     item_summary_kolkata = df_dsr_kolkata_filtered["Code"].value_counts()
+     item_summary_kolkata=item_summary_kolkata.reset_index()
+     item_summary_kolkata.rename(columns={"index":"Code","Code":"Count"},inplace=True)
+     #item_summary_kolkata
+    
+     # Creating the summary table for dress code in Delhi
+        
+     item_summary_delhi = df_dsr_delhi_filtered["Code"].value_counts()
+     item_summary_delhi=item_summary_delhi.reset_index()
+     item_summary_delhi.rename(columns={"index":"Code","Code":"Count"},inplace=True)
+     #item_summary_delhi 
+        
+     # making the dictionary of the item_summary for Kolkata and Delhi
+
+     #item_summary_kolkata_dict = {item_summary_kolkata["Code"][i]:item_summary_kolkata["Count"][i] for i in range(len(item_summary_kolkata["Code"]))}
+     #item_summary_delhi_dict = {item_summary_delhi["Code"][i]:item_summary_delhi["Count"][i] for i in range(len(item_summary_delhi["Code"]))}
+
+     # Not working with dictionary
+     # Creaating a bought string from the DSR tables
+
+     item_summary_kolkata_string = "".join(i for i in df_dsr_kolkata_filtered["Code"])
+     item_summary_delhi_string = "".join(i for i in df_dsr_delhi_filtered["Code"])
      
      # ______________________________________________Table For Delhi ____________________________________________________
 
@@ -719,7 +783,7 @@ def update_tried_location_tables(start_date,end_date,uPriceRange,lPriceRange,pro
 
      for index,row in df_stock_filtered_Delhi.iterrows():
         df_stock_filtered_Delhi.loc[index,"Times Tried"] = tried_string_Delhi.count(row["Style Code"])
-        df_stock_filtered_Delhi.loc[index,"Times Bought"] = bought_string_Delhi.count(row["Style Code"])
+        df_stock_filtered_Delhi.loc[index,"Times Bought"] = item_summary_delhi_string.count(row["Style Code"])
 
         # if there is one item bought then the tried cannot be zero so it is made to have a value of 1
         if (df_stock_filtered_Delhi.loc[index,"Times Tried"]==0) & (df_stock_filtered_Delhi.loc[index,"Times Bought"]>0):
@@ -763,7 +827,7 @@ def update_tried_location_tables(start_date,end_date,uPriceRange,lPriceRange,pro
 
      for index,row in df_stock_filtered_Kolkata.iterrows():
         df_stock_filtered_Kolkata.loc[index,"Times Tried"] = tried_string_Kolkata.count(row["Style Code"])
-        df_stock_filtered_Kolkata.loc[index,"Times Bought"] = bought_string_Kolkata.count(row["Style Code"])
+        df_stock_filtered_Kolkata.loc[index,"Times Bought"] = item_summary_kolkata_string.count(row["Style Code"])
 
         # If there is one item bought then the tried cannot be zero so it is made to one
         if (df_stock_filtered_Kolkata.loc[index,"Times Tried"]==0) & (df_stock_filtered_Kolkata.loc[index,"Times Bought"]>0):
@@ -780,14 +844,9 @@ def update_tried_location_tables(start_date,end_date,uPriceRange,lPriceRange,pro
      df_stock_filtered_Kolkata.drop_duplicates(subset="Style Code",inplace=True)
 
      return df_stock_filtered_Delhi.to_dict("records"),df_stock_filtered_Kolkata.to_dict("records")
-    
-
-
-     
-
 
                                                              
 # __________________________________________server run ___________________________________________________________________    
 
 if __name__=="__main__":
-    app.run(debug=True,port=8051)
+    app.run(debug=True,port=8023)
