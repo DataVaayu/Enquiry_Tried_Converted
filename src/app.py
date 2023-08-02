@@ -99,7 +99,7 @@ df_stock=df_stock[df_stock["Location Name"].isin(["Delhi Store New","Showroom","
 
 # RENAMING THE DATE COLUMN IN THE ENQUIRY SHEET
 
-df_enquiry.rename(columns={".":"Date"},inplace=True)
+df_enquiry.rename(columns={"DATE":"Date"},inplace=True)
 
 
 # _________________________ Transforming the Price Columns __________________________________________
