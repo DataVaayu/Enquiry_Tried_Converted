@@ -490,6 +490,7 @@ app.layout = dbc.Container([
     ]), 
 ])
 
+# __________ Callback for [Enquiry Analysis Figure, Product Master, Store Stock Tables, Headings] ________________________
 
 @callback(
     Output("customer-enquiry-analysis","figure"),
@@ -750,7 +751,7 @@ def update_tried_location_tables(start_date,end_date,uPriceRange,lPriceRange,pro
      #item_summary_delhi_dict = {item_summary_delhi["Code"][i]:item_summary_delhi["Count"][i] for i in range(len(item_summary_delhi["Code"]))}
 
      # Not working with dictionary
-     # Creaating a bought string from the DSR tables
+     # Creating a bought string from the DSR tables
 
      item_summary_kolkata_string = "".join(i for i in df_dsr_kolkata_filtered["Code"])
      item_summary_delhi_string = "".join(i for i in df_dsr_delhi_filtered["Code"])
