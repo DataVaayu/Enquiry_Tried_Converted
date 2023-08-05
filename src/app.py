@@ -273,6 +273,19 @@ df_dsr_delhi.drop(index=drop_index_delhi,inplace=True)
 df_dsr_delhi["Date2"]=pd.to_datetime(df_dsr_delhi["Date2"])
 df_dsr_delhi["Date2"]=df_dsr_delhi["Date2"].astype(str)
 
+# ___________________________ Combining the DSR Tables into One dataframe ________________________________
+
+df_dsr_total = pd.concat([df_dsr_kolkata, df_dsr_delhi],ignore_index=True)
+
+# Removing the commas from the MRP column
+df_dsr_total["MRP"] = df_dsr_total["MRP"].apply(lambda x: str(x).replace(",",""))
+
+# replacing the blanks with 0
+df_dsr_total["MRP"].replace("","0",inplace=True)
+
+# Changing the datatype of the MRP column
+df_dsr_total["MRP"]=df_dsr_total["MRP"].astype(int)
+
 # ___________________________ Creating the Dash App _______________________________________________________
 
 from dash import Dash, dcc, callback, Input, Output, dash_table,html
@@ -293,8 +306,8 @@ server=app.server
 
 app.layout = dbc.Container([
     
-    html.H1("Enquiry Sheet Analysis"),
-    
+    dbc.Row(html.H1("ENQUIRY SHEET ANALYSIS",style={"text-align":"center","background-color":"rgb(207,239,249)","color":"rgb(80,0,0)"}),className="p-5"),
+        
     dbc.Row([
         
         dbc.Col([
@@ -428,15 +441,31 @@ app.layout = dbc.Container([
     ]),
     
     html.Br(),
+    html.Br(),
+
+    # _______________________ Outfit Tried Table ______________________________________________
 
     dbc.Row([
-         html.H3("Outfits Tried",style={"offset":4}),
+         html.H3("Outfits Tried",style={"text-align":"center","background-color":"rgb(207,239,249)"}),
          dash_table.DataTable([{"data":i,"id":i}for i in df_enquiry[["Outfit Tried","Color","Price Bracket","Category"]].columns], page_size=10,id="outfit-tried-table",
                              style_data={"white-space":"normal"}),
     ]),
 
+    # _______________________ Outfit Bought Table Layout _____________________________________
+
     html.Br(),
-    html.H3("Enquiry to Trial to Conversion"),
+    html.Br(),
+    dbc.Row([
+         html.H3("Outfits Bought",style={"text-align":"center","background-color":"rgb(207,239,249)"}),
+         dash_table.DataTable([{"data":i,"id":i}for i in df_enquiry[["Outfit Tried","Color","Price Bracket","Category"]].columns], page_size=10,id="outfit-bought-table",
+                             style_data={"white-space":"normal"}),
+    ]),
+
+    # __________________________Conversion Tables________________________________________________
+
+    html.Br(),
+    html.Br(),
+    html.H3("Trial to Conversion of Items in Stock",style={"text-align":"center","background-color":"rgb(207,239,249)"}),
     html.Br(),
 
     #creating the dropdowns for style code and color - coded in the first call back
@@ -488,9 +517,8 @@ app.layout = dbc.Container([
 
 
     ]), 
-])
+],className="p-5")
 
-# __________ Callback for [Enquiry Analysis Figure, Product Master, Store Stock Tables, Headings] ________________________
 
 @callback(
     Output("customer-enquiry-analysis","figure"),
@@ -644,9 +672,10 @@ def update_graph(start_date,end_date,columns_selection,uPriceRange,lPriceRange,p
     Input("upper-price-range","value"),
     Input("lower-price-range","value"),
     Input("product-category-dropdown","value"),
+    Input("store-selector","value"),
 )
 
-def update_triedtable(start_date,end_date,uPriceLimit,lPriceLimit,productCategory):
+def update_triedtable(start_date,end_date,uPriceLimit,lPriceLimit,productCategory,storeSelection):
     start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)
 
@@ -691,15 +720,71 @@ def update_triedtable(start_date,end_date,uPriceLimit,lPriceLimit,productCategor
     
     #filtering out the category
     df_tried=df_tried[df_tried["Category"]==productCategory]
+
+    # Filtering out the selected store
+    df_tried=df_tried[df_tried["Point of Enquiry"].isin(storeSelection)]
     
     # creating the columns for number of trials and number of boughts
     
     
-    df_tried2 = df_tried[["Outfit Tried","Color","Price Bracket","Category","Lower Price Limit","Upper Price Limit"]]
+    df_tried2 = df_tried[["Outfit Tried","Color","Price Bracket","Category","Lower Price Limit","Upper Price Limit","Point of Enquiry"]]
     
     
     
     return df_tried2.to_dict("records")
+
+# ______________________________ Callback for Outfit Bought Table ______________________________
+
+@callback(
+    Output("outfit-bought-table","data"),
+    #Input("date-dropdown","value"),
+    Input("date-picker-range","start_date"),
+    Input("date-picker-range","end_date"),
+    Input("upper-price-range","value"),
+    Input("lower-price-range","value"),
+    Input("product-category-dropdown","value"),
+    Input("store-selector","value"),
+)
+
+def update_boughttable(start_date,end_date,uPriceLimit,lPriceLimit,productCategory,storeSelection):
+    start_date = pd.to_datetime(start_date)
+    end_date = pd.to_datetime(end_date)
+
+    date_values=[]
+    while start_date<=end_date:
+        date_values.append(start_date.strftime("%Y-%m-%d"))
+        start_date += timedelta(days=1)
+
+    # cleaning out the spelling of Lehenga according to the product master column
+    df_dsr_total["Silhouette"].replace("LEHENGA","LEHANGA",inplace=True)
+
+    # filtering out the dates for df_bought
+    df_bought=df_dsr_total[df_dsr_total["Date2"].isin(date_values)]
+
+    # filtering out the store of df_bought
+    for i in range(len(storeSelection)):
+        if storeSelection[i]=="Delhi Store":
+            storeSelection[i]="Delhi"
+        if storeSelection[i]=="Kolkata Store":
+            storeSelection[i]="Kolkata"
+
+
+    df_bought=df_bought[df_bought["Location"].isin(storeSelection)]
+    
+
+    # filtering out the price bracket of df_bought
+
+    df_bought=df_bought[(df_bought["MRP"]<=uPriceLimit) & (df_bought["MRP"]>=lPriceLimit)]
+
+    # Filtering out the price bracker for df_bought
+
+    df_bought=df_bought[df_bought["Silhouette"]==productCategory]
+
+    # Final filtering of the columns
+    df_bought2=df_bought[["Code","Colour","Colour Type","Silhouette","MRP","Location"]]
+       
+    
+    return df_bought2.to_dict("records")
 
 # ______________________________ Callback for Conversion Table ________________________________
 
@@ -751,7 +836,7 @@ def update_tried_location_tables(start_date,end_date,uPriceRange,lPriceRange,pro
      #item_summary_delhi_dict = {item_summary_delhi["Code"][i]:item_summary_delhi["Count"][i] for i in range(len(item_summary_delhi["Code"]))}
 
      # Not working with dictionary
-     # Creating a bought string from the DSR tables
+     # Creaating a bought string from the DSR tables
 
      item_summary_kolkata_string = "".join(i for i in df_dsr_kolkata_filtered["Code"])
      item_summary_delhi_string = "".join(i for i in df_dsr_delhi_filtered["Code"])
@@ -850,4 +935,4 @@ def update_tried_location_tables(start_date,end_date,uPriceRange,lPriceRange,pro
 # __________________________________________server run ___________________________________________________________________    
 
 if __name__=="__main__":
-    app.run(debug=True,port=8023)
+    app.run(debug=True,port=8022)
