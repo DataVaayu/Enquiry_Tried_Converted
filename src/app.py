@@ -328,13 +328,13 @@ app.layout = dbc.Container([
                 clearable=True,
                 number_of_months_shown=1,
                 min_date_allowed=date(2023, 1, 16),
-                initial_visible_month=date(2023, 7, 1),
+                initial_visible_month=date(2023, 8, 1),
                 display_format='MMM Do, YY',
                 month_format='MMMM, YYYY',
                 minimum_nights=1,
                 updatemode='singledate',
-                start_date='2023-07-24',
-                end_date="2023-07-29",
+                start_date='2023-07-31',
+                end_date="2023-08-05",
                 
             ),
             dbc.Row([
