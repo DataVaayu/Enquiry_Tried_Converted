@@ -119,6 +119,25 @@ df_stock=df_stock[df_stock["Location Name"].isin(["Delhi Store New","Showroom","
 
 df_enquiry.rename(columns={"DATE":"Date"},inplace=True)
 
+# ________________________________________ Cleaning the enquiry sheet Category Data __________________________
+
+# print(df_enquiry["Category"].unique())
+
+df_enquiry["Category"]=df_enquiry["Category"].astype(str)
+
+# df_enquiry["Category"]=df_enquiry["Category"].apply(lambda x: x.replace("","no data"))
+
+df_enquiry["Category"]=df_enquiry["Category"].apply(lambda x: x.replace("Miscellaneous","MISCELLANEOUS"))
+df_enquiry["Category"]=df_enquiry["Category"].apply(lambda x: x.replace("Lehenga","LEHANGA"))
+df_enquiry["Category"]=df_enquiry["Category"].apply(lambda x: x.replace("Saree","SAREE"))
+df_enquiry["Category"]=df_enquiry["Category"].apply(lambda x: x.replace("Jacket","JACKET"))
+df_enquiry["Category"]=df_enquiry["Category"].apply(lambda x: x.replace("Suit","SUIT"))
+df_enquiry["Category"]=df_enquiry["Category"].apply(lambda x: x.replace("Top Skirt","TOP SKIRT"))
+df_enquiry["Category"]=df_enquiry["Category"].apply(lambda x: x.replace("SUIT","SUIT"))
+
+
+df_enquiry["Category"]=df_enquiry["Category"].apply(lambda x: x.upper())
+
 
 # _________________________ Transforming the Price Columns __________________________________________
 
@@ -333,8 +352,8 @@ app.layout = dbc.Container([
                 month_format='MMMM, YYYY',
                 minimum_nights=1,
                 updatemode='singledate',
-                start_date='2023-07-31',
-                end_date="2023-08-05",
+                start_date='2023-04-1',
+                end_date="2023-08-11",
                 
             ),
             dbc.Row([
@@ -408,7 +427,7 @@ app.layout = dbc.Container([
     dbc.Row([
         
         dbc.Col([
-            html.H3(id="availability-store-heading"),
+            html.H3(id="availability-store-heading",style={"font-size":18}),
             html.Label(id="delhi-availability",style={"offset":"10"}),
             dash_table.DataTable([{"data":i,"id":i} for i in df_stock.columns],page_size=10,id="delhi-stock-table",
                                 style_data_conditional=[{
@@ -419,11 +438,11 @@ app.layout = dbc.Container([
                                     "background-color":"tomato",
                                     "color":"white",
 
-                                }]),
-            ],width=6),
+                                }],fill_width=False),
+            ],style={"width":3,}),
         
         dbc.Col([
-            html.H3(id="availability-osaa-heading"),
+            html.H3(id="availability-osaa-heading",style={"font-size":18}),
             html.Label(id="osaa-availability",style={"offset":"10"}),
             dash_table.DataTable([{"data":i,"id":i} for i in df_stock.columns],page_size=10,id="osaa-stock-table",
                                 style_data_conditional=[{
@@ -434,8 +453,8 @@ app.layout = dbc.Container([
                                     "background-color":"tomato",
                                     "color":"white",
 
-                                }]),
-            ],width=6),
+                                }],fill_width=False),
+            ],style={"width":3,"offset":2}),
         
         
     ]),
@@ -447,6 +466,7 @@ app.layout = dbc.Container([
 
     dbc.Row([
          html.H3("Outfits Tried",style={"text-align":"center","background-color":"rgb(207,239,249)"}),
+         html.Label(id="outfit-tried-table-count"),         
          dash_table.DataTable([{"data":i,"id":i}for i in df_enquiry[["Outfit Tried","Color","Price Bracket","Category"]].columns], page_size=10,id="outfit-tried-table",
                              style_data={"white-space":"normal"}),
     ]),
@@ -457,6 +477,7 @@ app.layout = dbc.Container([
     html.Br(),
     dbc.Row([
          html.H3("Outfits Bought",style={"text-align":"center","background-color":"rgb(207,239,249)"}),
+         html.Label(id="outfit-bought-table-count"),
          dash_table.DataTable([{"data":i,"id":i}for i in df_enquiry[["Outfit Tried","Color","Price Bracket","Category"]].columns], page_size=10,id="outfit-bought-table",
                              style_data={"white-space":"normal"}),
     ]),
@@ -485,7 +506,7 @@ app.layout = dbc.Container([
     
     dbc.Row([
          dbc.Col([
-              html.H3("Delhi Conversion"),
+              html.H3("Delhi Conversion",style={"font-size":18}),
               dash_table.DataTable([{"data":i,"id":i} for i in df_stock.columns],page_size=10,id="delhi-conversion-table",
                                    style_data_conditional=[{
                                    "if":{
@@ -495,11 +516,11 @@ app.layout = dbc.Container([
                                     "background-color":"tomato",
                                     "color":"white",
 
-                                }]),
+                                }],fill_width=False),
          ],width=6),
 
          dbc.Col([
-              html.H3("Kolkata Conversion"),
+              html.H3("Kolkata Conversion",style={"font-size":18}),
               dash_table.DataTable([{"data":i,"id":i} for i in df_stock.columns],page_size=10,id="kolkata-conversion-table",
                                    style_data_conditional=[{
                                    "if":{
@@ -509,7 +530,7 @@ app.layout = dbc.Container([
                                     "background-color":"tomato",
                                     "color":"white",
 
-                                }]),
+                                }],fill_width=False),
          ],width=6),  
 
          html.Br(),    
@@ -639,23 +660,41 @@ def update_graph(start_date,end_date,columns_selection,uPriceRange,lPriceRange,p
     df_enquiry_label = df_enquiry[df_enquiry["Date"].isin(date_values)]
     df_enquiry_Kolkata = df_enquiry_label[df_enquiry_label["Point of Enquiry"]=="Kolkata Store"]
     df_enquiry_Delhi = df_enquiry_label[df_enquiry_label["Point of Enquiry"]=="Delhi Store"]
+
+    # filtering the labels according to the category
+
+    df_enquiry_Kolkata=df_enquiry_Kolkata[df_enquiry_Kolkata["Category"]==productCatDropdown]
+    df_enquiry_Delhi=df_enquiry_Delhi[df_enquiry_Delhi["Category"]==productCatDropdown]
+
     
     # for Kolkata
     
     kolkata_enquiry = df_enquiry_Kolkata.shape[0]    
     kolkata_enquiry_tried = df_enquiry_Kolkata[df_enquiry_Kolkata["Tried / Not Tried"]=="Tried"].shape[0]
     kolkata_enquiry_bought = df_enquiry_Kolkata[df_enquiry_Kolkata["Bought /Did not buy"]=="Bought"].shape[0]
-    kolkata_label = f"KOLKATA Enquiries Overall: {kolkata_enquiry}, Tried: {int((kolkata_enquiry_tried/kolkata_enquiry)*100)}%, Bought: {int((kolkata_enquiry_bought/kolkata_enquiry)*100)}%"
+
+    if kolkata_enquiry_tried>0:
+        conversion_kolkata = int((kolkata_enquiry_bought/kolkata_enquiry_tried)*100)
+    else:
+        conversion_kolkata = "0"
+    #kolkata_label = f"KOLKATA Enquiries Overall: {kolkata_enquiry}, Tried: {int((kolkata_enquiry_tried/kolkata_enquiry)*100)}%, Bought: {int((kolkata_enquiry_bought/kolkata_enquiry)*100)}%"
+    kolkata_label = f"Kolkata enquiries for {productCatDropdown}: {kolkata_enquiry}, Tried: {kolkata_enquiry_tried}, Bought: {kolkata_enquiry_bought}, Conversion: {conversion_kolkata}%"
     
+
     # for Delhi
     
     delhi_enquiry = df_enquiry_Delhi.shape[0]    
     delhi_enquiry_tried = df_enquiry_Delhi[df_enquiry_Delhi["Tried / Not Tried"]=="Tried"].shape[0]
     delhi_enquiry_bought = df_enquiry_Delhi[df_enquiry_Delhi["Bought /Did not buy"]=="Bought"].shape[0]
-    delhi_label = f"DELHI Enquiries Overall: {delhi_enquiry}, Tried percent: {int((delhi_enquiry_tried/delhi_enquiry)*100)}%, Bought percent: {int((delhi_enquiry_bought/delhi_enquiry)*100)}%"
+
+    if delhi_enquiry_tried>0:
+        conversion_delhi = int((delhi_enquiry_bought/delhi_enquiry_tried)*100)
+    else:
+        conversion_delhi="0"
+    #delhi_label = f"DELHI Enquiries Overall: {delhi_enquiry}, Tried percent: {int((delhi_enquiry_tried/delhi_enquiry)*100)}%, Bought percent: {int((delhi_enquiry_bought/delhi_enquiry)*100)}%"
+    delhi_label = f"Delhi enquiries for {productCatDropdown}: {delhi_enquiry}, Tried: {delhi_enquiry_tried}, Bought: {delhi_enquiry_bought}, Conversion: {conversion_delhi}%"
     
-    
-    
+
     
     # print(uPriceRange,lPriceRange,productCatDropdown,occasionDropdown,radioNos)
     
@@ -666,6 +705,7 @@ def update_graph(start_date,end_date,columns_selection,uPriceRange,lPriceRange,p
 
 @callback(
     Output("outfit-tried-table","data"),
+    Output("outfit-tried-table-count","children"),
     #Input("date-dropdown","value"),
     Input("date-picker-range","start_date"),
     Input("date-picker-range","end_date"),
@@ -728,15 +768,17 @@ def update_triedtable(start_date,end_date,uPriceLimit,lPriceLimit,productCategor
     
     
     df_tried2 = df_tried[["Outfit Tried","Color","Price Bracket","Category","Lower Price Limit","Upper Price Limit","Point of Enquiry"]]
+    tried_number = df_tried2.shape[0]    
     
     
     
-    return df_tried2.to_dict("records")
+    return df_tried2.to_dict("records"), tried_number
 
 # ______________________________ Callback for Outfit Bought Table ______________________________
 
 @callback(
     Output("outfit-bought-table","data"),
+    Output("outfit-bought-table-count","children"),
     #Input("date-dropdown","value"),
     Input("date-picker-range","start_date"),
     Input("date-picker-range","end_date"),
@@ -782,9 +824,11 @@ def update_boughttable(start_date,end_date,uPriceLimit,lPriceLimit,productCatego
 
     # Final filtering of the columns
     df_bought2=df_bought[["Code","Colour","Colour Type","Silhouette","MRP","Location"]]
+
+    bought_number = df_bought2.shape[0]
        
     
-    return df_bought2.to_dict("records")
+    return df_bought2.to_dict("records"), bought_number
 
 # ______________________________ Callback for Conversion Table ________________________________
 
@@ -880,7 +924,7 @@ def update_tried_location_tables(start_date,end_date,uPriceRange,lPriceRange,pro
 
      for index,row in df_stock_filtered_Delhi.iterrows():
         if row["Times Tried"]!=0:
-            df_stock_filtered_Delhi.loc[index,"Conversion %"] = (row["Times Bought"]/row["Times Tried"])*100
+            df_stock_filtered_Delhi.loc[index,"Conversion %"] = int((row["Times Bought"]/row["Times Tried"])*100)
 
      df_stock_filtered_Delhi=df_stock_filtered_Delhi[~df_stock_filtered_Delhi["Times Tried"].isin([0])]
      df_stock_filtered_Delhi.drop_duplicates(subset="Style Code",inplace=True)
@@ -924,7 +968,7 @@ def update_tried_location_tables(start_date,end_date,uPriceRange,lPriceRange,pro
 
      for index,row in df_stock_filtered_Kolkata.iterrows():
         if row["Times Tried"]!=0:
-            df_stock_filtered_Kolkata.loc[index,"Conversion %"] = (row["Times Bought"]/row["Times Tried"])*100
+            df_stock_filtered_Kolkata.loc[index,"Conversion %"] = int((row["Times Bought"]/row["Times Tried"])*100)
 
      df_stock_filtered_Kolkata=df_stock_filtered_Kolkata[~df_stock_filtered_Kolkata["Times Tried"].isin([0])]
      df_stock_filtered_Kolkata.drop_duplicates(subset="Style Code",inplace=True)
