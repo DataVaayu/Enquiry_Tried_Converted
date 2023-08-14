@@ -111,9 +111,13 @@ for i in dataframes:
 # _____________________________Filtering the stock dataframe to stock of Osaa Only _______________________________________
 
 df_stock=df_stock[(df_stock["Location Type"]=='STORE')&(df_stock["Brand"]=="OSAA BY ADARSH")].copy()
-df_stock=df_stock[df_stock["Location Name"].isin(["Delhi Store New","Showroom","WAREHOUSE 1","WAREHOUSE 2","SALE PCS","CANDY WAREHOUSE"])]
+df_stock=df_stock[df_stock["Location Name"].isin(["Delhi Store New","Showroom","WAREHOUSE 1","WAREHOUSE 2","SALE PCS","CANDY WAREHOUSE","Warehouse"])]
 
-# ________________________________________________________________________________________________________________________
+# _____________________________________________Stripping the Tried Not Tried Column__________________________________________
+
+df_enquiry["Tried / Not Tried"] = df_enquiry["Tried / Not Tried"].apply(lambda x: str(x).strip())
+
+# _________________________________________________________________________________________________________________________
 
 # RENAMING THE DATE COLUMN IN THE ENQUIRY SHEET
 
@@ -321,7 +325,7 @@ from datetime import date, datetime, timedelta
 #df_stock = 
 
 app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
-server=app.server
+#server=app.server
 
 app.layout = dbc.Container([
     
@@ -606,6 +610,8 @@ def update_graph(start_date,end_date,columns_selection,uPriceRange,lPriceRange,p
              storeSelector.append("Showroom")
              storeSelector.append("WAREHOUSE 2")
              storeSelector.append("WAREHOUSE 1")
+             storeSelector.append("Warehouse")
+             storeSelector.append("SALE PCS")
         
         
     
@@ -640,9 +646,9 @@ def update_graph(start_date,end_date,columns_selection,uPriceRange,lPriceRange,p
     df_stock_filtered.drop_duplicates(subset="Style Code Color",inplace=True) # dropping duplicate style code color colummn
     # print(storeSelector)
         
-    # Filtering the Osaa stock availability that are not in Delhi
+    # Filtering the Osaa stock availability that are not in selected store
 
-    df_stock_filtered_OSAA = df_stock
+    df_stock_filtered_OSAA = df_stock[~df_stock["Location Name"].isin(storeSelector)]
     df_stock_filtered_OSAA=df_stock_filtered_OSAA[df_stock_filtered_OSAA["Category"]==productCatDropdown]   #filtering by product category
     df_stock_filtered_OSAA=df_stock_filtered_OSAA[(df_stock_filtered_OSAA["MRP"]>=lPriceRange) & (df_stock_filtered_OSAA["MRP"]<=uPriceRange)]    #filtering by price range
     df_stock_filtered_OSAA=df_stock_filtered_OSAA[~df_stock_filtered_OSAA["Style Code Color"].isin(df_stock_filtered["Style Code Color"])] # Filtering out the stylecode-color that are in selected store
@@ -666,6 +672,9 @@ def update_graph(start_date,end_date,columns_selection,uPriceRange,lPriceRange,p
     df_enquiry_Kolkata=df_enquiry_Kolkata[df_enquiry_Kolkata["Category"]==productCatDropdown]
     df_enquiry_Delhi=df_enquiry_Delhi[df_enquiry_Delhi["Category"]==productCatDropdown]
 
+    # filtering out the upper and lower price limits
+    df_enquiry_Kolkata = df_enquiry_Kolkata[(df_enquiry_Kolkata["Lower Price Limit"]>=lPriceRange) & (df_enquiry_Kolkata["Upper Price Limit"]<=uPriceRange)]
+    df_enquiry_Delhi = df_enquiry_Delhi[(df_enquiry_Delhi["Lower Price Limit"]>=lPriceRange) & (df_enquiry_Delhi["Upper Price Limit"]>=uPriceRange)]
     
     # for Kolkata
     
@@ -734,15 +743,15 @@ def update_triedtable(start_date,end_date,uPriceLimit,lPriceLimit,productCategor
     
     #'', '', '', '', '', '','SUIT', 'JACKET', 'SAREE', 'LEHANGA', 'GOWN', 'SEPARATE', 'WEAR'
     #   '', '', '', ''
-    df_tried["Category"].replace("Miscellaneous","",inplace=True)
+    df_tried["Category"].replace("Miscellaneous","MISCELLANEOUS",inplace=True)
     df_tried["Category"].replace("Lehenga","LEHANGA",inplace=True)
     df_tried["Category"].replace("Saree","SAREE",inplace=True)
     df_tried["Category"].replace("Jacket","JACKET",inplace=True)
     df_tried["Category"].replace("Suit","SUIT",inplace=True)
-    df_tried["Category"].replace("Top Skirt","",inplace=True)
+    df_tried["Category"].replace("Top Skirt","TOP SKIRT",inplace=True)
     df_tried["Category"].replace("Gown","GOWN",inplace=True)
     df_tried["Category"].replace("No Data","No Data",inplace=True)
-    df_tried["Category"].replace("SUIT","SUIT,inplace=True")
+    df_tried["Category"].replace("SUIT","SUIT",inplace=True)
     df_tried["Category"].replace("","No Data",inplace=True)
        
     # print(df_tried.columns)
@@ -763,7 +772,7 @@ def update_triedtable(start_date,end_date,uPriceLimit,lPriceLimit,productCategor
 
     # Filtering out the selected store
     df_tried=df_tried[df_tried["Point of Enquiry"].isin(storeSelection)]
-    
+
     # creating the columns for number of trials and number of boughts
     
     
@@ -979,4 +988,4 @@ def update_tried_location_tables(start_date,end_date,uPriceRange,lPriceRange,pro
 # __________________________________________server run ___________________________________________________________________    
 
 if __name__=="__main__":
-    app.run(debug=True,port=8022)
+    app.run(debug=True,port=8023)
